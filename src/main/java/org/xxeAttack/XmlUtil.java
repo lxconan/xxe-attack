@@ -7,7 +7,6 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -15,6 +14,8 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 
 public class XmlUtil {
+    private static final String DISABLE_DOCTYPE = "http://apache.org/xml/features/disallow-doctype-decl";
+
     public static String getElementContent(Document docuemnt, String tagName) {
         final StringBuilder stringBuilder = new StringBuilder();
         final NodeList nodeList = docuemnt.getElementsByTagName(tagName);
@@ -28,6 +29,8 @@ public class XmlUtil {
 
         return stringBuilder.toString();
     }
+
+
 
     public static Document parseDocument(
         String xml,
@@ -43,6 +46,21 @@ public class XmlUtil {
             }
             return documentBuilder.parse(stream);
         }
+    }
+
+    public static Document parseDocumentSafely(String xml) throws Exception {
+        try (
+            final InputStream stream = new ByteArrayInputStream(xml.getBytes())
+        ) {
+            final DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setFeature(DISABLE_DOCTYPE, true);
+            final DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            return documentBuilder.parse(stream);
+        }
+    }
+
+    public static Document parseDocument(String xml) throws Exception {
+        return parseDocument(xml, false);
     }
 
     private static ErrorHandler createErrorHandler() {
@@ -62,9 +80,5 @@ public class XmlUtil {
                 throw e;
             }
         };
-    }
-
-    public static Document parseDocument(String xml) throws Exception {
-        return parseDocument(xml, false);
     }
 }

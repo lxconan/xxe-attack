@@ -5,8 +5,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXParseException;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.xxeAttack.XmlUtil.getElementContent;
-import static org.xxeAttack.XmlUtil.parseDocument;
+import static org.xxeAttack.XmlUtil.*;
 
 class XxeAttackTest {
     @Test
@@ -93,5 +92,24 @@ class XxeAttackTest {
         final String password = getElementContent(document, "password");
 
         assertEquals("This is my password: O_o", password);
+    }
+
+    @Test
+    void should_prevent_external_entity() throws Exception {
+        // TODO: You may want to change this.
+        final String externalUri = "file:///home/liuxia/MyProject/xxe-attack/password.txt";
+
+        final String xml =
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                "<!DOCTYPE blog [ \n" +
+                "    <!ELEMENT blog ANY >\n" +
+                "    <!ELEMENT password (#PCDATA) >\n" +
+                "    <!ENTITY passwordContent SYSTEM \"" + externalUri + "\" >\n" +
+                "]> \n" +
+                "<blog>\n" +
+                "    <password>&passwordContent;</password> \n" +
+                "</blog>\n";
+
+        assertThrows(SAXParseException.class, () -> parseDocumentSafely(xml));
     }
 }
